@@ -1,0 +1,117 @@
+#version: '3.8' old docker-compose
+
+services:
+  # PHP-FPM + Laravel Application
+  app:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    container_name: laravel_app_auto_mes
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      # Cachowanie vendor i node_modules dla lepszej wydajności
+      - composer_cache:/home/laravel/.composer
+    networks:
+      - laravel
+    environment:
+      - PHP_IDE_CONFIG=serverName=Docker
+    depends_on:
+      - db
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: laravel_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - laravel
+    depends_on:
+      - app
+
+  # MySQL Database (zakomentowana - możesz odkomentować gdy będziesz gotowy)
+  # db:
+  #   image: mysql:8.4
+  #   container_name: laravel_mysql
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+  #     MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+  #     MYSQL_USER: ${DB_USERNAME:-laravel}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   ports:
+  #     - "${DB_PORT:-3306}:3306"
+  #   networks:
+  #     - laravel
+
+  # SQLite - tymczasowe rozwiązanie (używamy lokalnego pliku)
+  db:
+    image: alpine:latest
+    container_name: laravel_db_placeholder
+    command: tail -f /dev/null
+    networks:
+      - laravel
+
+  # Redis (cache, sessions, queue)
+#  redis:
+#    image: redis:alpine
+#    container_name: laravel_redis
+#    restart: unless-stopped
+#    ports:
+#      - "${REDIS_PORT:-6379}:6379"
+#    volumes:
+#      - redis_data:/data
+#    networks:
+#      - laravel
+#    command: redis-server --appendonly yes
+
+  # Mailpit (lokalny serwer SMTP do testowania maili)
+  mail:
+    image: axllent/mailpit:latest
+    container_name: laravel_mail
+    restart: unless-stopped
+    ports:
+      - "${MAIL_PORT:-1025}:1025"
+      - "${MAIL_DASHBOARD_PORT:-8025}:8025"
+    networks:
+      - laravel
+
+  # Node.js dla Vite (frontend assets)
+  node:
+    image: node:20-alpine
+    container_name: laravel_node
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - node_modules:/var/www/html/node_modules
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    networks:
+      - laravel
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    tty: true
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  composer_cache:
+    driver: local
+  node_modules:
+    driver: local
