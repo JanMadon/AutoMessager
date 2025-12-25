@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/twoj_user/automessager:latest  # ← Obraz z GitHub
+    image: ghcr.io/janmadon/automessager:latest  # ← Obraz z GitHub
     container_name: laravel_app
     restart: unless-stopped
     working_dir: /var/www/html
