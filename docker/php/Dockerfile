@@ -45,7 +45,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Konfiguracja PHP dla produkcji/development
-COPY php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Tworzenie użytkownika aplikacji (dla bezpieczeństwa nie używamy root)
 RUN addgroup -g ${GROUP_ID} laravel \
