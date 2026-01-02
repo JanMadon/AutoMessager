@@ -1,4 +1,4 @@
-# For mikrus / docker-compose.yml
+# For mikrus / docker-compose.yml jak się masz?
 services:
   app:
     image: ghcr.io/janmadon/automessager:latest
@@ -7,6 +7,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - app_code:/var/www/html
+      - app_database:/var/www/html/database
       - .env:/var/www/html/.env
     networks:
       - laravel
@@ -53,4 +54,6 @@ networks:
 
 volumes:
   app_code:  # ← Named volume dla kodu
+    driver: local
+  app_database: # ← Nowy volume dla bazy!
     driver: local
