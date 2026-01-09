@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Services\OpenAIService;
 use Filament\Pages\Page;
 
 class ChatPage extends Page
@@ -39,9 +40,12 @@ class ChatPage extends Page
         ];
 
         // Symulacja odpowiedzi asystenta (tutaj możesz podpiąć API)
+        $openAiService = new OpenAIService();
+        $response = $openAiService->getCompletion($this->messages);
+
         $this->messages[] = [
             'role' => 'assistant',
-            'content' => 'Otrzymałem: "' . $this->messageInput . '"',
+            'content' => $response,
             'time' => now()->format('H:i'),
         ];
 
