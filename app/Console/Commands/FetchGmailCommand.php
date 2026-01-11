@@ -94,7 +94,7 @@ class FetchGmailCommand extends Command
                     [
                         'gmail_accounts_id' => $account->id,
                         'subject' => $subject,
-                        'body' => $body['html'],
+                        'body' => $body['html'] ?? ($body['text'] ?? 'Brak danych'),
                         'sent_at' => $date,
                     ]
                 );
