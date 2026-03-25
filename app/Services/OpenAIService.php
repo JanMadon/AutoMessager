@@ -9,6 +9,7 @@ class OpenAIService
 {
     private string $chatUrl = 'https://api.openai.com/v1/responses';
     private Client $client;
+
     public function __construct()
     {
         $this->client = new Client();
@@ -23,7 +24,8 @@ class OpenAIService
                     'Authorization' => 'Bearer ' . config('openai.api_key')
                 ],
                 'json' => [
-                    'model' => 'gpt-4.1-mini',
+                    //'model' => 'gpt-4.1-mini',
+                    'model' => 'gpt-5.4',
                     'input' => $this->preparePrompt($prompt),
                 ]
             ]);
@@ -40,6 +42,24 @@ class OpenAIService
         return json_decode($res)->output[0]->content[0]->text ?? 'Error: Bad response from OpenAI';
     }
 
+    public function extractLearningPhrases(string $transcript, string $englishLevel): array
+    {
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'You are an English learning assistant. Return only valid JSON with this exact shape: {"phrases":[{"phrase":"...","translation":"...","context_sentence":"...","explanation":"..."}]}. Do not add markdown, comments, or extra keys.',
+            ],
+            [
+                'role' => 'user',
+                'content' => "English level: {$englishLevel}\n\nTranscript:\n{$transcript}\n\nSelect up to 20 useful phrases for this learner level. Provide Polish translations, short explanation, and one source sentence from transcript.",
+            ],
+        ];
+
+        $responseText = $this->getCompletion($messages);
+
+        return $this->parseLearningPhrases($responseText);
+    }
+
     private function preparePrompt(array $messages): array
     {
        $promptContent = [];
@@ -51,5 +71,46 @@ class OpenAIService
        }
 
        return $promptContent;
+    }
+
+    private function parseLearningPhrases(string $responseText): array
+    {
+        $decoded = json_decode($responseText, true);
+
+        if (! is_array($decoded)) {
+            preg_match('/```json\s*(.*?)\s*```/is', $responseText, $matches);
+
+            if (! empty($matches[1])) {
+                $decoded = json_decode($matches[1], true);
+            }
+        }
+
+        if (! is_array($decoded) || ! isset($decoded['phrases']) || ! is_array($decoded['phrases'])) {
+            return [];
+        }
+
+        $phrases = [];
+
+        foreach ($decoded['phrases'] as $phraseData) {
+            if (! is_array($phraseData)) {
+                continue;
+            }
+
+            $phrase = trim((string) ($phraseData['phrase'] ?? ''));
+            $translation = trim((string) ($phraseData['translation'] ?? ''));
+
+            if ($phrase === '' || $translation === '') {
+                continue;
+            }
+
+            $phrases[] = [
+                'phrase' => $phrase,
+                'translation' => $translation,
+                'context_sentence' => trim((string) ($phraseData['context_sentence'] ?? '')),
+                'explanation' => trim((string) ($phraseData['explanation'] ?? '')),
+            ];
+        }
+
+        return $phrases;
     }
 }
