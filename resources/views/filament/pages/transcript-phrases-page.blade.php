@@ -34,6 +34,13 @@
                     class="w-full rounded-lg border-gray-300 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm dark:border-gray-700 dark:bg-gray-900 dark:file:bg-gray-800"
                 />
                 <p class="mt-1 text-xs text-gray-500">Obsługiwane formaty: TXT, SRT, VTT (max 5 MB).</p>
+                <div wire:loading wire:target="transcriptFile" class="mt-2 inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    Przetwarzam plik...
+                </div>
             </div>
 
             <div>
@@ -49,41 +56,18 @@
 
             <button
                 type="submit"
-                class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
+                wire:loading.attr="disabled"
+                wire:target="analyzeTranscript,transcriptFile"
+                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
-                Analizuj i zapisz frazy
+                <svg wire:loading wire:target="analyzeTranscript,transcriptFile" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span wire:loading.remove wire:target="analyzeTranscript,transcriptFile">Analizuj i zapisz frazy</span>
+                <span wire:loading wire:target="analyzeTranscript,transcriptFile">Przetwarzam...</span>
             </button>
         </form>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <h3 class="mb-4 text-lg font-semibold">Ostatnio zapisane frazy</h3>
-
-            @if(empty($phrases))
-                <p class="text-sm text-gray-500">Brak zapisanych fraz.</p>
-            @else
-                <div class="space-y-3">
-                    @foreach($phrases as $phrase)
-                        <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
-                            <div class="mb-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                @if(!empty($phrase['episode_title']))
-                                    <span>{{ $phrase['episode_title'] }}</span>
-                                @endif
-                                <span class="rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-800">{{ $phrase['english_level'] }}</span>
-                            </div>
-                            <div class="font-medium text-gray-900 dark:text-gray-100">{{ $phrase['phrase'] }}</div>
-                            <div class="text-sm text-blue-700 dark:text-blue-300">{{ $phrase['translation'] }}</div>
-
-                            @if(!empty($phrase['context_sentence']))
-                                <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ $phrase['context_sentence'] }}</p>
-                            @endif
-
-                            @if(!empty($phrase['explanation']))
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $phrase['explanation'] }}</p>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
     </div>
 </x-filament-panels::page>

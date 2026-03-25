@@ -55,6 +55,13 @@ Zawiera:
 - `extractLearningPhrases(string $transcript, string $englishLevel): array` — prompt do OpenAI,
 - `parseLearningPhrases(string $responseText): array` — bezpieczne parsowanie odpowiedzi JSON.
 
+Zasady doboru fraz w promptcie:
+- frazy mają być ponad poziom użytkownika (lub na granicy poziomu),
+- muszą być istotne do zrozumienia **konkretnego** odcinka,
+- liczba fraz jest dynamiczna (zależna od trudności transkrypcji, zwykle `5-25`),
+- model nie powinien „dopchać” listy na siłę,
+- preferowane są idiomy, phrasal verbs i potoczne formy blokujące zrozumienie.
+
 Wymuszana struktura odpowiedzi:
 
 ```json

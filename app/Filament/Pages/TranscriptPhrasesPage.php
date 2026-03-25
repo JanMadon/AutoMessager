@@ -34,13 +34,6 @@ class TranscriptPhrasesPage extends Page
 
     public $transcriptFile = null;
 
-    public array $phrases = [];
-
-    public function mount(): void
-    {
-        $this->loadRecentPhrases();
-    }
-
     public function analyzeTranscript(OpenAIService $openAIService): void
     {
         $userId = Auth::id();
@@ -118,8 +111,6 @@ class TranscriptPhrasesPage extends Page
                 'explanation' => $phraseData['explanation'] ?: null,
             ]);
         }
-
-        $this->loadRecentPhrases();
 
         Notification::make()
             ->title('Gotowe')
@@ -203,25 +194,5 @@ class TranscriptPhrasesPage extends Page
         }
 
         return implode("\n", $cleanedBlocks);
-    }
-
-    private function loadRecentPhrases(): void
-    {
-        $this->phrases = LearningPhrase::query()
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->limit(50)
-            ->get()
-            ->map(function (LearningPhrase $phrase): array {
-                return [
-                    'episode_title' => $phrase->episode_title,
-                    'english_level' => $phrase->english_level,
-                    'phrase' => $phrase->phrase,
-                    'translation' => $phrase->translation,
-                    'context_sentence' => $phrase->context_sentence,
-                    'explanation' => $phrase->explanation,
-                ];
-            })
-            ->toArray();
     }
 }

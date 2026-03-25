@@ -47,11 +47,11 @@ class OpenAIService
         $messages = [
             [
                 'role' => 'system',
-                'content' => 'You are an English learning assistant. Return only valid JSON with this exact shape: {"phrases":[{"phrase":"...","translation":"...","context_sentence":"...","explanation":"..."}]}. Do not add markdown, comments, or extra keys.',
+                'content' => 'You are an English learning assistant focused on comprehension gaps. Return only valid JSON with this exact shape: {"phrases":[{"phrase":"...","translation":"...","context_sentence":"...","explanation":"..."}]}. Do not add markdown, comments, or extra keys.',
             ],
             [
                 'role' => 'user',
-                'content' => "English level: {$englishLevel}\n\nTranscript:\n{$transcript}\n\nSelect up to 20 useful phrases for this learner level. Provide Polish translations, short explanation, and one source sentence from transcript.",
+                'content' => "English level (CEFR): {$englishLevel}\n\nTranscript:\n{$transcript}\n\nTask:\n1) Return only phrases that are likely ABOVE this learner level (or at the upper edge) and IMPORTANT to understand this specific episode.\n2) The number of phrases should be dynamic, based on transcript difficulty (typically 5-25). Do not pad the list.\n3) Do NOT include very basic phrases that a learner at this level likely already knows.\n4) Prefer idioms, phrasal verbs, colloquial expressions, culture-specific wording, and compressed spoken forms that may block comprehension.\n5) Use exact wording from transcript for phrase and context sentence.\n6) Provide Polish translations and a short explanation why/when the phrase is used.",
             ],
         ];
 
