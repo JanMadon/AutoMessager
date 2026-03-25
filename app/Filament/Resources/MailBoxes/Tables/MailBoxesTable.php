@@ -15,9 +15,11 @@ class MailBoxesTable
     {
         return $table
             ->columns([
-                TextColumn::make('id')->searchable(),
+                TextColumn::make('id')->sortable(),
                 TextColumn::make('gmailAccounts.email')->searchable(),
-                TextColumn::make('subject')->searchable(),
+                TextColumn::make('subject')
+                    ->limit(75)
+                    ->searchable(),
                 TextColumn::make('sent_at')
             ])
             ->filters([

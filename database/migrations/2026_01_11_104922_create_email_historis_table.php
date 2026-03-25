@@ -11,17 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mail_boxes', function (Blueprint $table) {
+        Schema::create('email_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('gmail_accounts_id')->constrained()->cascadeOnDelete();
-            $table->dateTime('sent_at');
-            $table->string('subject');
-            $table->longText('body')->nullable();
-            $table->string('from')->nullable();
-            $table->string('message_id')->unique()->nullable();
-            $table->string('last_history_id')->nullable();
-
+            $table->integer('history_id');
             $table->timestamps();
+
+            $table->unique(['gmail_accounts_id', 'history_id']);
         });
     }
 
@@ -30,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('mail_boxes');
+        Schema::dropIfExists('email_histories');
     }
 };

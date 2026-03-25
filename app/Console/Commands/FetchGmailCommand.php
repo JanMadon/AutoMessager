@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\EmailHistory;
 use App\Models\GmailAccount;
 use App\Models\MailBox;
 use Google_Client;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class FetchGmailCommand extends Command
 {
@@ -62,20 +62,36 @@ class FetchGmailCommand extends Command
             $client = new Google_Client();
             $client->setAuthConfig(storage_path('google/credentials.json'));
             $client->setScopes([\Google_Service_Gmail::GMAIL_READONLY]);
-
-            // 🔑 najważniejsze
             $client->refreshToken(decrypt($account->refresh_token));
 
             $service = new \Google_Service_Gmail($client);
 
+            $profile = $service->users->getProfile('me');
+            $currentHistoryId = $profile->getHistoryId();
+
+            EmailHistory::firstOrCreate([
+                'gmail_accounts_id' => $account->id,
+                'history_id' => $currentHistoryId,
+            ]);
+
             $messages = $service->users_messages->listUsersMessages('me', [
                 'q' => 'is:unread',
-                'maxResults' => 5,
+                'maxResults' => 1500,
             ]);
 
             foreach ($messages->getMessages() ?? [] as $msg) {
+                $messageId = $msg->getId();
+                $isEmailExist = MailBox::where('gmail_accounts_id', $account->id)
+                    ->where('message_id', $messageId)
+                    ->exists();
 
-                $message = $service->users_messages->get('me' , $msg->getId());
+                if ($isEmailExist) {
+                    $this->info('Message already exists: ' . $messageId);
+                    continue;
+                }
+
+                $message = $service->users_messages->get('me' , $messageId);
+
                 $body = $this->extractBody($message->getPayload());
 
                 $headers = collect($message->getPayload()->getHeaders())
@@ -84,9 +100,13 @@ class FetchGmailCommand extends Command
                 $from = $headers['From']->getValue() ?? '';
                 $subject = $headers['Subject']->getValue() ?? '';
                 $dateHeader = $headers['Date']->getValue() ?? null;
+                if ($dateHeader) {
+                    // usuwa wszystko w nawiasach: (GMT+01:00)
+                    $cleanDate = preg_replace('/\s*\(.*?\)$/', '', $dateHeader);
 
-                $sentAt = $dateHeader ? new \Carbon\Carbon($dateHeader): null;
-                $date = $sentAt->toDateTimeString() ?? null;
+                    $sentAt = \Carbon\Carbon::parse($cleanDate);
+                    $date = $sentAt->toDateTimeString();
+                }
 
                 $this->line(" - {$subject} ({$from})");
 
@@ -95,10 +115,12 @@ class FetchGmailCommand extends Command
                         'gmail_accounts_id' => $account->id,
                         'subject' => $subject,
                         'body' => $body['html'] ?? ($body['text'] ?? 'Brak danych'),
-                        'sent_at' => $date,
+                        'sent_at' => $date ?? null,
+                        'from' => $from,
+                        'message_id' => $messageId,
+                        'last_history_id' => $message->getHistoryId(),
                     ]
                 );
-                dd('koniec');
             }
         }
     }
@@ -136,8 +158,11 @@ class FetchGmailCommand extends Command
         return $result;
     }
 
-    private function decode(string $data): string
+    private function decode(?string $data): string
     {
+        if(is_null($data)) {
+            return '';
+        }
         return base64_decode(strtr($data, '-_', '+/'));
     }
 }

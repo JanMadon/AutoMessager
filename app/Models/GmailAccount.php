@@ -16,5 +16,10 @@ class GmailAccount extends Model
     {
         return $this->hasMany(Mailbox::class, 'gmail_accounts_id');
     }
+
+    public function emailHistory(): HasMany
+    {
+        return $this->hasMany(EmailHistory::class, 'gmail_accounts_id');
+    }
 }
 

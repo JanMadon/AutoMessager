@@ -12,6 +12,9 @@ class MailBox extends Model
         'sent_at',
         'subject',
         'body',
+        'from',
+        'message_id',
+        'last_history_id',
     ];
 
     public function gmailAccounts(): BelongsTo
