@@ -110,9 +110,10 @@ jobs:
           script: |
             cd /var/www/automessager
             docker compose pull app
-            docker compose up -d --force-recreate app nginx
+            docker compose down
+            docker volume rm automessager_app_public 2>/dev/null || true
+            docker compose up -d
             docker compose exec -T app php artisan migrate --force
             docker compose exec -T app php artisan config:cache
             docker compose exec -T app php artisan route:cache
             docker compose exec -T app php artisan view:cache
-            docker compose exec -T app php artisan opcache:clear 2>/dev/null || true
